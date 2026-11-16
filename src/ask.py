@@ -1,18 +1,21 @@
+from src.agent import run_agent
+from src.guardrails import check_query, logger
 from src.recommender import load_songs
-from src.rag import retrieve_songs, generate_answer
 
 
 def main() -> None:
     songs = load_songs("data/songs.csv")
     query = input("What kind of music do you want? ")
 
-    found_songs = retrieve_songs(query, songs, k=5)
-    print("\nSongs found:")
-    for song in found_songs:
-        print(f"- {song['title']} ({song['genre']}, {song['mood']})")
+    # Guardrail: stop bad input before calling Gemini.
+    problem = check_query(query)
+    if problem:
+        print(problem)
+        logger.warning("Rejected request: %r", query)
+        return
 
-    print("\nGemini says:")
-    print(generate_answer(query, found_songs))
+    logger.info("New request: %s", query)
+    run_agent(query, songs)
 
 
 if __name__ == "__main__":
