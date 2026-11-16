@@ -1,0 +1,32 @@
+flowchart TD
+    U[User types a request] --> G1{Guardrail: check_query<br/>empty or too long?}
+    G1 -- bad --> R1[Show friendly error, log warning]
+    G1 -- ok --> A1
+
+    subgraph Agent["Agent (src/agent.py)"]
+        A1[Step 1 PLAN<br/>Gemini turns sentence into profile<br/>genre, mood, energy] --> A2[Step 2 USE TOOL<br/>recommend_songs scores all songs]
+        A2 --> A3{Step 3 CHECK<br/>top score >= 3.0?}
+        A3 -- no, tries left --> FB[Send feedback:<br/>real genre/mood pairs] --> A1
+        A3 -- yes, or out of tries --> A4[Keep best attempt]
+    end
+
+    A1 -. Gemini fails .-> F1[Fallback: RAG word finder<br/>retrieve_songs]
+    F1 --> A4
+
+    DATA[(data/songs.csv<br/>18 songs)] --> A2
+    DATA --> F1
+    DATA -. genre and mood choices .-> A1
+
+    A4 --> S[Step 4 ANSWER<br/>DJ Vibe: few-shot specialized prompt<br/>uses ONLY retrieved songs]
+    S -. Gemini fails .-> F2[Fallback: plain song list]
+    S --> OUT[Answer shown to user]
+    F2 --> OUT
+
+    LOG[(app.log)]
+    R1 -.-> LOG
+    A1 -.-> LOG
+    F1 -.-> LOG
+
+    T[pytest: 11 tests<br/>fake Gemini] -. checks .-> G1
+    T -. checks .-> A3
+    T -. checks .-> F1
