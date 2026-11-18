@@ -53,7 +53,11 @@ Diagram source: [`diagrams/architecture.mmd`](diagrams/architecture.mmd)
    ```bash
    python -m src.ask
    ```
-5. Other commands:
+5. Or use the web page (example buttons, DJ answer, top-5 table, and the agent's steps):
+   ```bash
+   streamlit run app.py
+   ```
+6. Other commands:
    ```bash
    python -m pytest -q             # 11 automated tests (no internet needed)
    python -m src.evaluate          # evaluation script with live Gemini
